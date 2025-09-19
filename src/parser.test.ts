@@ -1,5 +1,5 @@
-import { parseMessageFormat } from "./parser.ts";
 import { expect } from "jsr:@std/expect";
+import { parseMessageFormat } from "./parser.ts";
 
 type StructuralCase = [string, unknown[]];
 
@@ -1424,6 +1424,24 @@ const structuralCases: StructuralCase[] = [
             "}",
           ],
         },
+        toString: expect.any(Function),
+      },
+    ],
+  ],
+  [
+    "Value: {a.b[0].c}",
+    [
+      "Value",
+      ":",
+      " ",
+      {
+        type: "variable",
+        path: {
+          type: "path",
+          path: ["a", "b", "0", "c"],
+          toString: expect.any(Function),
+        },
+        transformer: undefined,
         toString: expect.any(Function),
       },
     ],

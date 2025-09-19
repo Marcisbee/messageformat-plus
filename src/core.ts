@@ -1,5 +1,8 @@
 import { date } from "./formatters/date.ts";
 import { duration } from "./formatters/duration.ts";
+import { number } from "./formatters/number.ts";
+import { time } from "./formatters/time.ts";
+import { select } from "./formatters/select.ts";
 import { parseMessageFormat } from "./parser.ts";
 import type { MessageFormatter } from "./types.ts";
 import dlv from "./utils/delve.ts";
@@ -8,13 +11,11 @@ export type { MessageFormatter } from "./types.ts";
 
 export class MessageFormat {
   public baseFormatters: Record<string, MessageFormatter> = {
-    // locale: (_, lc) => lc,
-    uppercase: (v: string) => v.toUpperCase(),
-    lowercase: (v: string) => v.toLowerCase(),
-    number: (v: number) => v.toString(),
-    time: (v: Date) => v.toTimeString(),
     date,
     duration,
+    number,
+    time,
+    select,
   };
 
   public customFormatters: Record<string, MessageFormatter> = {};

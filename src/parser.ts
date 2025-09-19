@@ -119,6 +119,11 @@ export function parseMessageFormat(input: string): MessageNode {
         ),
       ],
       ([first, rest]) => {
+        // Allow this pattern foo.bar[12]
+        if (typeof first === "string" && /^\d+$/.test(first)) {
+          return first;
+        }
+
         return {
           type: "path",
           path: [first, ...rest],
