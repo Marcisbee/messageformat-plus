@@ -1,17 +1,9 @@
 # messageformat-plus
 
-<a href="https://github.com/Marcisbee/messageformat-plus/actions">
-  <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/Marcisbee/messageformat-plus/main.yml?branch=main&style=flat-square" />
-</a>
-<a href="https://www.npmjs.com/package/messageformat-plus">
-  <img alt="npm" src="https://img.shields.io/npm/v/messageformat-plus.svg?style=flat-square" />
-</a>
-<a href="https://jsr.io/@marcisbee/mf">
-  <img alt="jsr" src="https://jsr.io/badges/@marcisbee/mf?style=flat-square" />
-</a>
-<a href="https://bundlephobia.com/result?p=messageformat-plus">
-  <img alt="package size" src="https://deno.bundlejs.com/?q=messageformat-plus&badge=&badge-style=flat-square" />
-</a>
+[![CI](https://img.shields.io/github/actions/workflow/status/Marcisbee/messageformat-plus/main.yml?branch=main&style=flat-square)](https://github.com/Marcisbee/messageformat-plus/actions)
+[![npm](https://img.shields.io/npm/v/messageformat-plus.svg?style=flat-square)](https://www.npmjs.com/package/messageformat-plus)
+[![jsr](https://jsr.io/badges/@marcisbee/mf?style=flat-square)](https://jsr.io/@marcisbee/mf)
+[![package size](https://deno.bundlejs.com/?q=messageformat-plus&badge=&badge-style=flat-square)](https://bundlephobia.com/result?p=messageformat-plus)
 
 A lightweight, modern take on ICU MessageFormat-inspired message compilation
 with a focus on:
