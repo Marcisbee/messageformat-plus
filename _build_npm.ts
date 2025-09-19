@@ -1,6 +1,7 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-net --allow-env --allow-run
 
 import * as dnt from "jsr:@deno/dnt";
+import denojson from "./deno.json" with { type: "json" };
 
 async function start() {
   await dnt.emptyDir("./npm");
@@ -17,8 +18,9 @@ async function start() {
     },
     package: {
       name: "messageformat-plus",
-      version: Deno.args[0],
-      description: "A middleware framework for handling HTTP requests",
+      version: denojson.version,
+      description:
+        "Messageformat with flexible parser and minimal spec deviation",
       license: "MIT",
       repository: {
         type: "git",
