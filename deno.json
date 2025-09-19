@@ -1,5 +1,5 @@
 {
-	"name": "@marcisbee/mf",
+  "name": "@marcisbee/mf",
   "version": "0.1.0",
   "license": "MIT",
   "exports": "./src/core.ts",
@@ -8,5 +8,11 @@
   },
   "imports": {
     "@marcisbee/nanolex": "jsr:@marcisbee/nanolex@^0.6.0"
+  },
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      "exclude": ["no-unversioned-import", "no-explicit-any"]
+    }
   }
 }

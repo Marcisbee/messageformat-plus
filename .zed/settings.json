@@ -13,6 +13,7 @@
       "language_servers": [
         "deno",
         "!typescript-language-server",
+        "!biome",
         "!vtsls",
         "!eslint"
       ],
@@ -22,6 +23,7 @@
       "language_servers": [
         "deno",
         "!typescript-language-server",
+        "!biome",
         "!vtsls",
         "!eslint"
       ],
@@ -31,6 +33,7 @@
       "language_servers": [
         "deno",
         "!typescript-language-server",
+        "!biome",
         "!vtsls",
         "!eslint"
       ],
