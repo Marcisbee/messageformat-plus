@@ -9,7 +9,7 @@ Deno.test("MessageFormat works", async (t) => {
   });
 
   await t.step("plain string", () => {
-    expect(mf.compile("test")()).toEqual("test");
+    expect(mf.compile("test")({})).toEqual("test");
   });
 
   await t.step("simple variable", () => {

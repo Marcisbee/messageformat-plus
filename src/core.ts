@@ -34,30 +34,22 @@ export class MessageFormat {
   public compile(
     message: string,
     locale?: string | string[],
-  ): (params?: Record<string, any>) => string {
+  ): (params: Record<string, any>) => string {
     const ctx = {
-      d: this.format,
+      d: {
+        ...this.baseFormatters,
+        ...this.customFormatters,
+      },
       p: dlv,
       l: locale || this.locale,
+      // try(fn: () => any) {
+      //   try {
+      //     return fn();
+      //   } catch {
+      //     return "";
+      //   }
+      // }
     };
     return new Function("v", `return ${parseMessageFormat(message)}`).bind(ctx);
   }
-
-  private format = (
-    value: any,
-    locale: string,
-    name?: string,
-    args: any[] = [],
-  ) => {
-    if (!name) {
-      return value;
-    }
-
-    const formatter = this.customFormatters[name] || this.baseFormatters[name];
-    if (!formatter) {
-      throw new Error(`Unknown formatter: ${JSON.stringify(name)}`);
-    }
-
-    return formatter(value, locale, ...args);
-  };
 }

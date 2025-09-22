@@ -5,7 +5,6 @@ import {
   nanolex,
 } from "@marcisbee/nanolex";
 
-// Define tokens
 const Whitespace = createToken(/[ \t\n\r]+/, "Whitespace");
 const LBrace = createToken("{");
 const RBrace = createToken("}");
@@ -15,47 +14,38 @@ const LBracket = createToken("[");
 const RBracket = createToken("]");
 const LParen = createToken("(");
 const RParen = createToken(")");
-const NumberLiteral = createToken(/\d+/, "Number");
 const Identifier = createToken(/[a-zA-Z0-9_-]+/, "Identifier");
-const Equals = createToken("=");
-const Hash = createToken("#");
 const Backslash = createToken("\\");
-const QuoteSingle = createToken(/'/, "QuoteSingle");
-const QuoteDouble = createToken(/"/, "QuoteDouble");
-const QuoteTick = createToken(/`/, "QuoteTick");
-const Anything = createToken(/.*/);
+const QuoteSingle = createToken("'", "QuoteSingle");
+const QuoteDouble = createToken(`"`, "QuoteDouble");
+const QuoteTick = createToken("`", "QuoteTick");
+const Anything = createToken(/.+/);
 
 const tokens = getComposedTokens([
   Whitespace,
+  Identifier,
   LBrace,
   RBrace,
-  Comma,
   Dot,
+  Comma,
   LBracket,
   RBracket,
-  NumberLiteral,
-  Identifier,
-  Equals,
-  Hash,
   LParen,
   RParen,
-  QuoteSingle,
   QuoteDouble,
+  QuoteSingle,
   QuoteTick,
   Backslash,
 ]);
 
-// AST node types
 interface MessageNode {
   type: "message";
-  // content is mixed: plain strings from TEXT and structured nodes produced by the parser
   content: (string | VariableNode | PathNode | TransformerNode)[];
   toString?: () => string;
 }
 
 interface PathNode {
   type: "path";
-  // path segments can be plain identifiers (string) or nested PathNode for bracketed paths
   path: (string | PathNode)[];
   toString?: () => string;
 }
@@ -73,7 +63,6 @@ interface VariableNode {
   toString?: () => string;
 }
 
-// Parser implementation
 export function parseMessageFormat(input: string): MessageNode {
   const {
     consume,
@@ -128,6 +117,9 @@ export function parseMessageFormat(input: string): MessageNode {
           type: "path",
           path: [first, ...rest],
           toString() {
+            if (!rest.length) {
+              return `v[${JSON.stringify(first)}]`;
+            }
             return (
               "this.p(v,[" +
               this.path.map((val: any) => {
@@ -263,18 +255,18 @@ export function parseMessageFormat(input: string): MessageNode {
         path,
         transformer,
         toString() {
-          return (
-            "this.d(" +
-            [
-              String(path),
-              "this.l",
-              transformer?.name && JSON.stringify(transformer.name),
-              transformer?.args?.length && JSON.stringify(transformer.args),
-            ]
-              .filter(Boolean)
-              .join(",") +
-            ")"
-          );
+          if (!transformer?.name) {
+            return String(path);
+          }
+
+          const tName = JSON.stringify(transformer.name);
+          const pathStr = String(path);
+          const args = transformer.args;
+          if (args && args.length) {
+            return "this.d[" + tName + "](" + pathStr + ",this.l," +
+              JSON.stringify(args) + ")";
+          }
+          return "this.d[" + tName + "](" + pathStr + ",this.l)";
         },
       }),
     )();

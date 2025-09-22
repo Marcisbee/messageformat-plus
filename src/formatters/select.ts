@@ -21,7 +21,7 @@ import type { MessageFormatter } from "../types.ts";
  *    the parser would need to recursively parse those segments into message ASTs
  *    and we would need to evaluate them here with access to the runtime context.
  */
-export const select: MessageFormatter = (value, _lc, ...rawArgs: any[]) => {
+export const select: MessageFormatter = (value, _lc, rawArgs) => {
   const args = rawArgs || [];
   const options: Record<string, string> = Object.create(null);
 

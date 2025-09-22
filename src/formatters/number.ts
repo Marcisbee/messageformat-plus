@@ -39,7 +39,7 @@ function coerceNumber(value: unknown): number {
   return n;
 }
 
-export const number: MessageFormatter = (value, lc, ...rawArgs) => {
+export const number: MessageFormatter = (value, lc, rawArgs) => {
   const num = coerceNumber(value);
   if (!Number.isFinite(num)) return String(value);
 
@@ -104,10 +104,10 @@ export const number: MessageFormatter = (value, lc, ...rawArgs) => {
 
 // Optional specialized aliases mirroring original messageformat runtime API
 export const numberInteger: MessageFormatter = (value, lc) =>
-  number(value, lc, "integer");
+  number(value, lc, ["integer"]);
 
 export const numberPercent: MessageFormatter = (value, lc) =>
-  number(value, lc, "percent");
+  number(value, lc, ["percent"]);
 
 export const numberCurrency: MessageFormatter = (value, lc, currency) =>
-  number(value, lc, currency ? `currency:${currency}` : "currency");
+  number(value, lc, [currency ? `currency:${currency}` : "currency"]);

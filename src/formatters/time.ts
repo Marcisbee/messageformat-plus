@@ -11,7 +11,7 @@ import type { MessageFormatter } from "../types.ts";
  *
  * Accepts either a Unix epoch (ms) number or any value coercible via `new Date(value)`.
  */
-export const time: MessageFormatter = (value, lc, size) => {
+export const time: MessageFormatter = (value, lc, [size] = []) => {
   const o: Intl.DateTimeFormatOptions = {
     second: "numeric",
     minute: "numeric",

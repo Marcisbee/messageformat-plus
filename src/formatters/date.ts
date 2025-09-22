@@ -1,6 +1,6 @@
 import type { MessageFormatter } from "../types.ts";
 
-export const date: MessageFormatter = (value, lc, size) => {
+export const date: MessageFormatter = (value, lc, [size] = []) => {
   const o: Intl.DateTimeFormatOptions = {
     day: "numeric",
     month: "short",
