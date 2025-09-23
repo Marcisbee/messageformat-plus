@@ -155,7 +155,7 @@ export function parseMessageFormat(input: string): MessageNode {
         [
           not(consumeBehind(Backslash)),
           consume(LBrace),
-          consumeUntilUnescaped(RBrace),
+          ARG_MESSAGE_CONTENT,
           not(consumeBehind(Backslash)),
           consume(RBrace),
         ],
@@ -214,6 +214,16 @@ export function parseMessageFormat(input: string): MessageNode {
     ])();
   }
 
+  function ARG_MESSAGE_CONTENT() {
+    return zeroOrMany(
+      or([
+        consume(Whitespace),
+        VARIABLE,
+        and([not(peek(consume(RBrace))), TEXT], ([, text]) => text),
+      ]),
+    )();
+  }
+
   function ARGS() {
     return and(
       [
@@ -259,12 +269,25 @@ export function parseMessageFormat(input: string): MessageNode {
             return String(path);
           }
 
+          function stringifyArgsRecursive(args: any): any {
+            if (Array.isArray(args)) {
+              return "[" + String(args.map(stringifyArgsRecursive)) + "]";
+            } else if (
+              args && typeof args === "object" &&
+              typeof args.toString === "function"
+            ) {
+              return args.toString();
+            } else {
+              return JSON.stringify(args);
+            }
+          }
+
           const tName = JSON.stringify(transformer.name);
           const pathStr = String(path);
           const args = transformer.args;
           if (args && args.length) {
             return "this.d[" + tName + "](" + pathStr + ",this.l," +
-              JSON.stringify(args) + ")";
+              stringifyArgsRecursive(args) + ")";
           }
           return "this.d[" + tName + "](" + pathStr + ",this.l)";
         },

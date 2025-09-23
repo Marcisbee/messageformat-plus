@@ -41,7 +41,7 @@ console.log(greet({
 | `time`     | `{t, time}`, `{t, time, short}`, `{t, time, long}`                                                                  |
 | `duration` | `{s, duration}` (seconds -> `H:MM:SS(.fff)`)                                                                        |
 | `number`   | `{n, number}`, `{n, number, integer}`, `{p, number, percent}`, `{v, number, currency}`, `{v, number, currency:EUR}` |
-| `select`   | `{g, select, male{He} female{She} other{They}}`                                                                     |
+| `select`   | `{g, select, male{He} female{She} other{They}}`, `{name, select, other{Hello {name}!}}`                             |
 
 (You can register your own via `customFormatters`.)
 
@@ -91,10 +91,10 @@ the original `messageformat` v1 runtime. Key differences:
    `selectordinal`, rich nested message interpolation inside select arms, or
    skeleton-based date/number formatting. Only a focused subset is provided.
 
-5. Simpler argument parsing model Transformer (formatter) arguments are passed
-   as a raw token-ish array. Complex nested `{}` inside formatter arms are
-   presently flattened as text. (Future work could re-parse inner segments
-   recursively.)
+5. Enhanced argument parsing model Transformer (formatter) arguments are passed
+   as a structured array. Nested `{}` inside formatter args containing variables
+   are parsed recursively, allowing for dynamic content within select options
+   and other formatter arguments.
 
 6. Error handling Unknown formatter names throw early at runtime. Malformed
    argument groupings default to a sane fallback rather than fail the whole
@@ -139,12 +139,34 @@ The parser builds a compact JS expression and uses `new Function` bound with a
 lightweight context (`d` = dispatcher, `p` = path resolver, `l` = locale). This
 keeps runtime evaluation fast after the initial compile.
 
+## Nested Variables in Formatter Arguments
+
+Variables can be nested within formatter arguments by wrapping them in braces:
+
+```ts
+const mf = new MessageFormat("en");
+
+// Simple select with nested variable
+const greet = mf.compile("{name, select, other{Hello {name}!}}");
+greet({ name: "Alice" }); // "Hello Alice!"
+
+// More complex example with multiple nested variables
+const status = mf.compile(`{user.role, select,
+  admin{Welcome {user.name}, you have {permissions.count} permissions}
+  user{Hi {user.name}!}
+  other{Hello guest}
+}`);
+
+status({
+  user: { name: "Bob", role: "admin" },
+  permissions: { count: 15 },
+}); // "Welcome Bob, you have 15 permissions"
+```
+
 ## Caveats
 
 - Output can vary across environments due to `Intl` differences (especially
   currency & time zone strings).
-- Select arm contents are currently treated as plain text; embedded variables
-  are not re-interpreted.
 
 ## Contributing
 

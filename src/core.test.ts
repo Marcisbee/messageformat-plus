@@ -258,4 +258,19 @@ Deno.test("MessageFormat works", async (t) => {
     expect(fn({ name: "bob" })).toEqual("Hi User");
     expect(fn({ name: "bob.foo_@$!" })).toEqual("Hi Bob");
   });
+
+  await t.step("compiled function with nested select", () => {
+    const fn = mf.compile(
+      "Hi {name, select, alice{Alice({name})} other{User}}",
+    );
+    expect(fn({ name: "alice" })).toEqual("Hi Alice(alice)");
+    expect(fn({ name: "bob" })).toEqual("Hi User");
+  });
+
+  await t.step("compiled function with undefined value select", () => {
+    const fn = mf.compile("Hi {name, select, other{{name}} undefined{user}}");
+    expect(fn({ name: "alice" })).toEqual("Hi alice");
+    expect(fn({ name: "bob" })).toEqual("Hi bob");
+    expect(fn({})).toEqual("Hi user");
+  });
 });

@@ -1,4 +1,5 @@
 import { default as MF2 } from "npm:messageformat@2.3.0";
+import { MessageFormat as CustomPrevious } from "npm:messageformat-plus@0.3.0";
 
 import { MessageFormat as Custom } from "./core.ts";
 import { parseMessageFormat } from "./parser.ts";
@@ -28,12 +29,20 @@ Deno.bench("custom", { group: "full" }, () => {
   new Custom("en", { customFormatters }).compile(input)(data);
 });
 
+Deno.bench("custom@latest", { group: "full" }, () => {
+  new CustomPrevious("en", { customFormatters }).compile(input)(data);
+});
+
 Deno.bench("messageformat@2.3.0", { group: "full" }, () => {
   new MF2("en", { customFormatters }).compile(input)(data);
 });
 
 Deno.bench("custom", { group: "compile" }, () => {
   new Custom("en", { customFormatters }).compile(input);
+});
+
+Deno.bench("custom@latest", { group: "compile" }, () => {
+  new CustomPrevious("en", { customFormatters }).compile(input);
 });
 
 Deno.bench("messageformat@2.3.0", { group: "compile" }, () => {
@@ -46,6 +55,11 @@ console.log(
 );
 Deno.bench("custom", { group: "eval" }, () => {
   mfthis(data);
+});
+
+const mfprev = new CustomPrevious("en", { customFormatters }).compile(input);
+Deno.bench("custom@latest", { group: "eval" }, () => {
+  mfprev(data);
 });
 
 const mf2 = new MF2("en", { customFormatters }).compile(input);
