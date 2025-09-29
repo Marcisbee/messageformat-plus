@@ -1,4 +1,5 @@
 import {
+  createPattern,
   createToken,
   EOF,
   getComposedTokens,
@@ -63,6 +64,17 @@ interface VariableNode {
   toString?: () => string;
 }
 
+// Create patterns
+const TEXT = createPattern("text");
+const PATH_SEGMENT = createPattern("path_segment");
+const PATH = createPattern("path");
+const MATCHING_DELIMITERS = createPattern("matching_delimiters");
+const ARG_MESSAGE_CONTENT = createPattern("arg_message_content");
+const ARGS = createPattern("args");
+const TRANSFORMER = createPattern("transformer");
+const VARIABLE = createPattern("variable");
+const MESSAGE = createPattern("message");
+
 export function parseMessageFormat(input: string): MessageNode {
   const {
     consume,
@@ -82,59 +94,6 @@ export function parseMessageFormat(input: string): MessageNode {
   // Skip whitespace
   patternToSkip(consume(Whitespace));
 
-  function TEXT() {
-    return consume(Anything)();
-  }
-
-  function PATH_SEGMENT() {
-    return or([
-      consume(Identifier),
-      and([consume(LBracket), PATH, consume(RBracket)], ([, path]) => path),
-    ])();
-  }
-
-  function PATH() {
-    return and(
-      [
-        PATH_SEGMENT,
-        zeroOrMany(
-          or([
-            and([consume(Dot), consume(Identifier)], ([, id]) => id),
-            and(
-              [consume(LBracket), PATH, consume(RBracket)],
-              ([, path]) => path,
-            ),
-          ]),
-        ),
-      ],
-      ([first, rest]) => {
-        // Allow this pattern foo.bar[12]
-        if (typeof first === "string" && /^\d+$/.test(first)) {
-          return first;
-        }
-
-        return {
-          type: "path",
-          path: [first, ...rest],
-          toString() {
-            if (!rest.length) {
-              return `v[${JSON.stringify(first)}]`;
-            }
-            return (
-              "this.p(v,[" +
-              this.path.map((val: any) => {
-                return typeof val === "string"
-                  ? JSON.stringify(val)
-                  : String(val);
-              }) +
-              "])"
-            );
-          },
-        };
-      },
-    )();
-  }
-
   function consumeUntilUnescaped(
     token: Parameters<typeof consume>[0],
   ): ReturnType<typeof zeroOrMany> {
@@ -148,156 +107,194 @@ export function parseMessageFormat(input: string): MessageNode {
     );
   }
 
-  function MATCHING_DELIMITERS() {
-    return or([
-      consume(Whitespace),
-      and(
-        [
-          not(consumeBehind(Backslash)),
-          consume(LBrace),
-          ARG_MESSAGE_CONTENT,
-          not(consumeBehind(Backslash)),
-          consume(RBrace),
-        ],
-        ([, lb, content, , rb]) => [lb, content, rb],
-      ),
-      and(
-        [
-          not(consumeBehind(Backslash)),
-          consume(LBracket),
-          consumeUntilUnescaped(RBracket),
-          not(consumeBehind(Backslash)),
-          consume(RBracket),
-        ],
-        ([, lb, content, , rb]) => [lb, content, rb],
-      ),
-      and(
-        [
-          not(consumeBehind(Backslash)),
-          consume(LParen),
-          consumeUntilUnescaped(RParen),
-          not(consumeBehind(Backslash)),
-          consume(RParen),
-        ],
-        ([, lb, content, , rb]) => [lb, content, rb],
-      ),
-      and(
-        [
-          not(consumeBehind(Backslash)),
-          consume(QuoteSingle),
-          consumeUntil(QuoteSingle),
-          not(consumeBehind(Backslash)),
-          consume(QuoteSingle),
-        ],
-        ([, lb, content, , rb]) => [lb, content, rb],
-      ),
-      and(
-        [
-          not(consumeBehind(Backslash)),
-          consume(QuoteDouble),
-          consumeUntil(QuoteDouble),
-          not(consumeBehind(Backslash)),
-          consume(QuoteDouble),
-        ],
-        ([, lb, content, , rb]) => [lb, content, rb],
-      ),
-      and(
-        [
-          not(consumeBehind(Backslash)),
-          consume(QuoteTick),
-          consumeUntil(QuoteTick),
-          not(consumeBehind(Backslash)),
-          consume(QuoteTick),
-        ],
-        ([, lb, content, , rb]) => [lb, content, rb],
-      ),
-    ])();
-  }
+  // Set pattern definitions
+  TEXT.set = consume(Anything);
 
-  function ARG_MESSAGE_CONTENT() {
-    return zeroOrMany(
-      or([
-        consume(Whitespace),
-        VARIABLE,
-        and([not(peek(consume(RBrace))), TEXT], ([, text]) => text),
-      ]),
-    )();
-  }
+  PATH_SEGMENT.set = or([
+    consume(Identifier),
+    and([consume(LBracket), PATH, consume(RBracket)], ([, path]) => path),
+  ]);
 
-  function ARGS() {
-    return and(
-      [
-        consume(Comma),
-        zeroOrMany(consume(Whitespace)),
-        oneOrMany(
-          or([consume(Whitespace), MATCHING_DELIMITERS, TEXT]),
-          undefined,
-          and([not(consumeBehind(Backslash)), consume(RBrace)]),
-        ),
-      ],
-      ([, , text]) => text,
-    )();
-  }
+  PATH.set = and(
+    [
+      PATH_SEGMENT,
+      zeroOrMany(
+        or([
+          and([consume(Dot), consume(Identifier)], ([, id]) => id),
+          and(
+            [consume(LBracket), PATH, consume(RBracket)],
+            ([, path]) => path,
+          ),
+        ]),
+      ),
+    ],
+    ([first, rest]) => {
+      // Allow this pattern foo.bar[12]
+      if (typeof first === "string" && /^\d+$/.test(first)) {
+        return first;
+      }
 
-  function TRANSFORMER() {
-    return and(
-      [consume(Comma), consume(Identifier), zeroOrMany(ARGS)],
-      ([, name, args]) => ({
-        type: "transformer",
-        name,
-        args: args?.flat(2).filter(Boolean),
-      }),
-    )();
-  }
+      const result = {
+        type: "path",
+        path: [first, ...rest],
+      };
+      result.toString = function () {
+        if (this.path.length === 1 && typeof this.path[0] === "string") {
+          return `v[${JSON.stringify(this.path[0])}]`;
+        }
+        return (
+          "this.p(v,[" +
+          this.path.map((val) => {
+            return typeof val === "string" ? JSON.stringify(val) : String(val);
+          }) +
+          "])"
+        );
+      };
+      return result;
+    },
+  );
 
-  function VARIABLE() {
-    return and(
+  MATCHING_DELIMITERS.set = or([
+    consume(Whitespace),
+    and(
       [
         not(consumeBehind(Backslash)),
         consume(LBrace),
-        PATH,
-        zeroOrOne(TRANSFORMER),
+        ARG_MESSAGE_CONTENT,
         not(consumeBehind(Backslash)),
         consume(RBrace),
       ],
-      ([_, _lb, path, transformer, _rb]) => ({
-        type: "variable",
-        path,
-        transformer,
-        toString() {
-          if (!transformer?.name) {
-            return String(path);
-          }
+      ([, lb, content, , rb]) => [lb, content, rb],
+    ),
+    and(
+      [
+        not(consumeBehind(Backslash)),
+        consume(LBracket),
+        consumeUntilUnescaped(RBracket),
+        not(consumeBehind(Backslash)),
+        consume(RBracket),
+      ],
+      ([, lb, content, , rb]) => [lb, content, rb],
+    ),
+    and(
+      [
+        not(consumeBehind(Backslash)),
+        consume(LParen),
+        consumeUntilUnescaped(RParen),
+        not(consumeBehind(Backslash)),
+        consume(RParen),
+      ],
+      ([, lb, content, , rb]) => [lb, content, rb],
+    ),
+    and(
+      [
+        not(consumeBehind(Backslash)),
+        consume(QuoteSingle),
+        consumeUntil(QuoteSingle),
+        not(consumeBehind(Backslash)),
+        consume(QuoteSingle),
+      ],
+      ([, lb, content, , rb]) => [lb, content, rb],
+    ),
+    and(
+      [
+        not(consumeBehind(Backslash)),
+        consume(QuoteDouble),
+        consumeUntil(QuoteDouble),
+        not(consumeBehind(Backslash)),
+        consume(QuoteDouble),
+      ],
+      ([, lb, content, , rb]) => [lb, content, rb],
+    ),
+    and(
+      [
+        not(consumeBehind(Backslash)),
+        consume(QuoteTick),
+        consumeUntil(QuoteTick),
+        not(consumeBehind(Backslash)),
+        consume(QuoteTick),
+      ],
+      ([, lb, content, , rb]) => [lb, content, rb],
+    ),
+  ]);
 
-          function stringifyArgsRecursive(args: any): any {
-            if (Array.isArray(args)) {
-              return "[" + String(args.map(stringifyArgsRecursive)) + "]";
-            } else if (
-              args && typeof args === "object" &&
-              typeof args.toString === "function"
-            ) {
-              return args.toString();
-            } else {
-              return JSON.stringify(args);
-            }
-          }
+  ARG_MESSAGE_CONTENT.set = zeroOrMany(
+    or([
+      consume(Whitespace),
+      VARIABLE,
+      and([not(peek(consume(RBrace))), TEXT], ([, text]) => text),
+    ]),
+  );
 
-          const tName = JSON.stringify(transformer.name);
-          const pathStr = String(path);
-          const args = transformer.args;
-          if (args && args.length) {
-            return "this.d[" + tName + "](" + pathStr + ",this.l," +
-              stringifyArgsRecursive(args) + ")";
+  ARGS.set = and(
+    [
+      consume(Comma),
+      zeroOrMany(consume(Whitespace)),
+      oneOrMany(
+        or([consume(Whitespace), MATCHING_DELIMITERS, TEXT]),
+        undefined,
+        and([not(consumeBehind(Backslash)), consume(RBrace)]),
+      ),
+    ],
+    ([, , text]) => text,
+  );
+
+  TRANSFORMER.set = and(
+    [consume(Comma), consume(Identifier), zeroOrMany(ARGS)],
+    ([, name, args]) => ({
+      type: "transformer",
+      name,
+      args: args?.flat(2).filter(Boolean),
+    }),
+  );
+
+  VARIABLE.set = and(
+    [
+      not(consumeBehind(Backslash)),
+      consume(LBrace),
+      PATH,
+      zeroOrOne(TRANSFORMER),
+      not(consumeBehind(Backslash)),
+      consume(RBrace),
+    ],
+    ([_, _lb, path, transformer, _rb]) => ({
+      type: "variable",
+      path,
+      transformer,
+      toString() {
+        if (!transformer?.name) {
+          return String(path);
+        }
+
+        function stringifyArgsRecursive(args: any): any {
+          if (Array.isArray(args)) {
+            return "[" + String(args.map(stringifyArgsRecursive)) + "]";
+          } else if (
+            args && typeof args === "object" &&
+            typeof args.toString === "function"
+          ) {
+            return args.toString();
+          } else {
+            return JSON.stringify(args);
           }
-          return "this.d[" + tName + "](" + pathStr + ",this.l)";
-        },
-      }),
-    )();
-  }
+        }
+
+        const tName = JSON.stringify(transformer.name);
+        const pathStr = String(path);
+        const args = transformer.args;
+        if (args && args.length) {
+          return "this.d[" + tName + "](" + pathStr + ",this.l," +
+            stringifyArgsRecursive(args) + ")";
+        }
+        return "this.d[" + tName + "](" + pathStr + ",this.l)";
+      },
+    }),
+  );
 
   // Message content (recursive)
-  function MESSAGE() {
-    return zeroOrMany(or([consume(Whitespace), VARIABLE, TEXT]), (content) => ({
+  MESSAGE.set = zeroOrMany(
+    or([consume(Whitespace), VARIABLE, TEXT]),
+    (content) => ({
       type: "message",
       content,
       toString() {
@@ -324,8 +321,8 @@ export function parseMessageFormat(input: string): MessageNode {
         }
         return segments.join("+");
       },
-    }))();
-  }
+    }),
+  );
 
   // Run parser
   const [output] = throwIfError(and([MESSAGE, consume(EOF)]));

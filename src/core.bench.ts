@@ -1,5 +1,5 @@
 import { default as MF2 } from "npm:messageformat@2.3.0";
-import { MessageFormat as CustomPrevious } from "npm:messageformat-plus@0.3.0";
+import { MessageFormat as CustomPrevious } from "jsr:@marcisbee/mf@0.4.0";
 
 import { MessageFormat as Custom } from "./core.ts";
 import { parseMessageFormat } from "./parser.ts";
