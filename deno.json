@@ -7,7 +7,7 @@
     "dev": "deno run --watch main.ts"
   },
   "imports": {
-    "@marcisbee/nanolex": "jsr:@marcisbee/nanolex@^0.7.0"
+    "@marcisbee/nanolex": "jsr:@marcisbee/nanolex@^0.8.2"
   },
   "lint": {
     "rules": {
