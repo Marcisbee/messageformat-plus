@@ -150,6 +150,14 @@ Deno.test("MessageFormat works", async (t) => {
     ).toEqual("He");
   });
 
+  await t.step("select basic value match with spaces", () => {
+    expect(
+      mf.compile("{G, select, male {He} female {She} other {They}}")({
+        G: "male",
+      }),
+    ).toEqual("He");
+  });
+
   await t.step("select other fallback", () => {
     expect(
       mf.compile("{G, select, male{He} female{She} other{They}}")({

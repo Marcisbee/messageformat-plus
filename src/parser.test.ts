@@ -257,6 +257,50 @@ const structuralCases: StructuralCase[] = [
     ],
   ],
   [
+    "Hello { input.gender, select, male {Mr}} {input.first_name} {input.last_name}!",
+    [
+      "Hello",
+      " ",
+      {
+        type: "variable",
+        path: {
+          type: "path",
+          path: ["input", "gender"],
+          toString: expect.any(Function),
+        },
+        transformer: {
+          type: "transformer",
+          name: "select",
+          args: ["male", " ", "{", ["Mr"], "}"],
+        },
+        toString: expect.any(Function),
+      },
+      " ",
+      {
+        type: "variable",
+        path: {
+          type: "path",
+          path: ["input", "first_name"],
+          toString: expect.any(Function),
+        },
+        transformer: undefined,
+        toString: expect.any(Function),
+      },
+      " ",
+      {
+        type: "variable",
+        path: {
+          type: "path",
+          path: ["input", "last_name"],
+          toString: expect.any(Function),
+        },
+        transformer: undefined,
+        toString: expect.any(Function),
+      },
+      "!",
+    ],
+  ],
+  [
     "Hello { input.name, select, other{{input.name}} undefined{User}}!",
     [
       "Hello",

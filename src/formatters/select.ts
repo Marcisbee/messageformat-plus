@@ -5,6 +5,7 @@ import type { MessageFormatter } from "../types.ts";
  *
  * Expected message usage (simplified):
  *   {gender, select, male{He} female{She} other{They}}
+ *   {gender, select, male {He} female {She} other {They}}
  *
  * Parser passes the raw token/segment list for all arguments to this formatter:
  *   ["male","{",["He"],"}"," ","female","{",["She"],"}"," ","other","{",["They"],"}"]
@@ -38,20 +39,22 @@ export const select: MessageFormatter = (value, _lc, rawArgs) => {
     // preceding it. This allows keys composed of symbol/punctuation tokens that
     // the parser may have split into multiple string fragments (e.g. ["bob", ".", "foo_", "@$!"])
     if (args[i] === "{") {
-      // Expect pattern: KEY_TOKENS... "{" CONTENT "}"
       if (i + 2 < args.length && args[i + 2] === "}") {
-        // Walk backwards from i-1 collecting contiguous non-whitespace string tokens
-        // that are not braces. Stop when encountering a space token, a brace, non-string,
-        // or the start of the array.
-        let start = i - 1;
+        let keyEnd = i;
+        while (keyEnd > 0) {
+          const t = args[keyEnd - 1];
+          if (typeof t !== "string" || !/^\s*$/.test(t)) break;
+          keyEnd--;
+        }
+        let start = keyEnd - 1;
         while (start >= 0) {
           const t = args[start];
           if (typeof t !== "string") break;
           if (t === "{" || t === "}") break;
-          if (/^\s*$/.test(t)) break; // stop on whitespace separators
+          if (/^\s*$/.test(t)) break;
           start--;
         }
-        const keyTokens = args.slice(start + 1, i);
+        const keyTokens = args.slice(start + 1, keyEnd);
         if (keyTokens.length > 0) {
           const key = keyTokens.map((k) => String(k)).join("");
           const content = args[i + 1];
